@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"k8s-simple-wrapper/cmd"
+	"github.com/pableeee/k8s-simple-wrapper/cmd"
 	"os"
 )
 

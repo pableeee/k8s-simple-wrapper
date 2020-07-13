@@ -1,4 +1,4 @@
-module k8s-simple-wrapper
+module github.com/pableeee/k8s-simple-wrapper
 
 go 1.14
 

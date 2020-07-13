@@ -4,18 +4,14 @@ package cmd
 import (
 	"bufio"
 	"context"
-	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	//
 	// Uncomment to load all auth plugins
 	// _ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -27,18 +23,20 @@ import (
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/openstack"
 )
 
+//DeploymentManager K8s deployment wrapper interface
 type DeploymentManager interface {
 	CreateDeployment(cfg, namespace, image, name string) (string, error)
 	DeleteDeployment(cfg, namespace, name string) (string, error)
 }
 
+//DeploymentManagerImpl DeploymentManager implementation
 type DeploymentManagerImpl struct {
-
 }
 
+//CreateDeployment creates a kubernetes deployment with the given parameters
 func (dp *DeploymentManagerImpl) CreateDeployment(cfg, namespace, image, name string) (string, error) {
 
-	namespace, err, client := dp.configSetup(cfg, namespace)
+	namespace, client, err := dp.configSetup(cfg, namespace)
 
 	deploymentRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 
@@ -51,7 +49,6 @@ func (dp *DeploymentManagerImpl) CreateDeployment(cfg, namespace, image, name st
 		panic(err)
 	}
 	fmt.Printf("Created deployment %q.\n", result.GetName())
-
 
 	return "foobar", err
 }
@@ -72,8 +69,9 @@ func (dp *DeploymentManagerImpl) listDeployments(err error, client dynamic.Inter
 	}
 }
 
+//DeleteDeployment deletes the specified deployment
 func (dp *DeploymentManagerImpl) DeleteDeployment(cfg, namespace, name string) (string, error) {
-	namespace, err, client := dp.configSetup(cfg, namespace)
+	namespace, client, err := dp.configSetup(cfg, namespace)
 
 	deploymentRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	fmt.Println("Deleting deployment...")
@@ -86,38 +84,7 @@ func (dp *DeploymentManagerImpl) DeleteDeployment(cfg, namespace, name string) (
 	}
 
 	fmt.Println("Deleted deployment.")
-	return "foobar",err
-}
-
-func (dp *DeploymentManagerImpl) configSetup(cfg string, namespace string) (string, error, dynamic.Interface) {
-	var kubeconfig *string
-
-	if cfg != "" {
-		kubeconfig = flag.String("kubeconfig", cfg, "absolute path to the kubeconfig file")
-	} else {
-
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-		} else {
-			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-		}
-		flag.Parse()
-	}
-
-	if namespace == "" {
-		namespace = "default"
-	}
-
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		panic(err)
-	}
-
-	client, err := dynamic.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-	return namespace, err, client
+	return "foobar", err
 }
 
 func createDeploymentFromTemplate(namespace, image, name string) *unstructured.Unstructured {
@@ -150,13 +117,13 @@ func createDeploymentFromTemplate(namespace, image, name string) *unstructured.U
 							{
 								"name":  name,
 								"image": image,
-/*								"ports": []map[string]interface{}{
-									{
-										"name":          "http",
-										"protocol":      "TCP",
-										"containerPort": 80,
-									},
-								},*/
+								/*								"ports": []map[string]interface{}{
+																{
+																	"name":          "http",
+																	"protocol":      "TCP",
+																	"containerPort": 80,
+																},
+															},*/
 							},
 						},
 					},
