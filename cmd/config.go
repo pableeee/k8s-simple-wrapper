@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-func (dp *DeploymentManagerImpl) configSetup(cfg string, namespace string) (string, dynamic.Interface, error) {
+func configSetup(cfg string, namespace string) (string, dynamic.Interface, error) {
 	var kubeconfig *string
 
 	if cfg != "" {

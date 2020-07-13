@@ -36,7 +36,7 @@ type DeploymentManagerImpl struct {
 //CreateDeployment creates a kubernetes deployment with the given parameters
 func (dp *DeploymentManagerImpl) CreateDeployment(cfg, namespace, image, name string) (string, error) {
 
-	namespace, client, err := dp.configSetup(cfg, namespace)
+	namespace, client, err := configSetup(cfg, namespace)
 
 	deploymentRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 
@@ -71,7 +71,7 @@ func (dp *DeploymentManagerImpl) listDeployments(err error, client dynamic.Inter
 
 //DeleteDeployment deletes the specified deployment
 func (dp *DeploymentManagerImpl) DeleteDeployment(cfg, namespace, name string) (string, error) {
-	namespace, client, err := dp.configSetup(cfg, namespace)
+	namespace, client, err := configSetup(cfg, namespace)
 
 	deploymentRes := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	fmt.Println("Deleting deployment...")
