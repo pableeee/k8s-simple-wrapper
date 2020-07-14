@@ -31,7 +31,7 @@ func main() {
 	fmt.Println(res)
 
 	service := cmd.ServiceManagerImpl{}
-	var port uint16
+	var port cmd.ServiceResponse
 
 	port, err = service.CreateService("", "default", "nginx", 80)
 	fmt.Println(port)

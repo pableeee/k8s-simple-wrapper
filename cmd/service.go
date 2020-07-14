@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,9 +19,18 @@ import (
 // _ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 // _ "k8s.io/client-go/plugin/pkg/client/auth/openstack"
 
+type Port struct {
+	Port int64
+	NodePort int64
+}
+
+type ServiceResponse struct {
+	Ports map[string]int64
+}
+
 //ServiceManager K8s service wrapper interface
 type ServiceManager interface {
-	CreateService(cfg, namespace, name string, port uint16) (uint16, error)
+	CreateService(cfg, namespace, name string, port uint16) (ServiceResponse, error)
 	DeleteService(cfg, namespace, name string) error
 }
 
@@ -32,34 +39,32 @@ type ServiceManagerImpl struct {
 }
 
 //CreateService asdsad
-func (sm *ServiceManagerImpl) CreateService(cfg, namespace, name string, port uint16) (uint16, error) {
+func (sm *ServiceManagerImpl) CreateService(cfg, namespace, name string, port uint16) (ServiceResponse, error) {
+
+	res := ServiceResponse{}
 
 	namespace1, client, err := configSetup(cfg, namespace)
+
+	if err != nil {
+		return res, err
+	}
 
 	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
 
 	service := sm.createServiceFromTemplate(namespace1, name, port)
 
 	// Create service
-	fmt.Println("Creating service...")
-	result, err := client.Resource(serviceRes).Namespace(namespace1).Create(context.TODO(), service, metav1.CreateOptions{})
+	var result *unstructured.Unstructured
+
+	result, err = client.Resource(serviceRes).Namespace(namespace1).Create(context.TODO(), service, metav1.CreateOptions{})
+
 	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
+		return res, err
 	}
 
-	value, ok, errs := unstructured.NestedSlice(result.UnstructuredContent(), "spec", "ports")
+	res.Ports, err = unwrapNodePort(result);
 
-	if ok && errs == nil && len(value) == 1 {
-		v, k := value[0].(map[string]interface{})
-		if k {
-			fmt.Println(v["nodePort"])
-		}
-	}
-
-	//fmt.Printf("Created service %q.\n", result.GetName())
-
-	return 1, err
+	return res,err
 }
 
 func (sm *ServiceManagerImpl) createServiceFromTemplate(namespace, name string, port uint16) *unstructured.Unstructured {
@@ -93,16 +98,4 @@ func (sm *ServiceManagerImpl) createServiceFromTemplate(namespace, name string, 
 		},
 	}
 	return service
-}
-
-//UnwrapNodePort aasdasd
-func (sm *ServiceManagerImpl) UnwrapNodePort(value unstructured.Unstructured) int64 {
-	value, ok, errs := unstructured.NestedSlice(value.UnstructuredContent(), "spec", "ports")
-
-	if ok && errs == nil && len(value) == 1 {
-		v, k := value[0].(map[string]interface{})
-		if k {
-			fmt.Println(v["nodePort"])
-		}
-	}
 }
