@@ -3,8 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/pableeee/k8s-simple-wrapper/cmd"
 	"os"
+
+	"github.com/pableeee/k8s-simple-wrapper/cmd"
 )
 
 func prompt() {
@@ -19,7 +20,7 @@ func prompt() {
 	fmt.Println()
 }
 
-func main()  {
+func main() {
 	deployment := cmd.DeploymentManagerImpl{}
 	res, err := deployment.CreateDeployment("", "default", "nginx", "nginx")
 
@@ -27,6 +28,12 @@ func main()  {
 		fmt.Println("Hubo un error")
 		os.Exit(1)
 	}
-
 	fmt.Println(res)
+
+	service := cmd.ServiceManagerImpl{}
+	var port uint16
+
+	port, err = service.CreateService("", "default", "nginx", 80)
+	fmt.Println(port)
+
 }

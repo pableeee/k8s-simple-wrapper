@@ -93,7 +93,8 @@ func createDeploymentFromTemplate(namespace, image, name string) *unstructured.U
 			"apiVersion": "apps/v1",
 			"kind":       "Deployment",
 			"metadata": map[string]interface{}{
-				"name": name,
+				"name":      name,
+				"namespace": namespace,
 				"labels": map[string]interface{}{
 					"app": name,
 				},

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"flag"
 	"path/filepath"
 
@@ -10,25 +11,23 @@ import (
 )
 
 func configSetup(cfg string, namespace string) (string, dynamic.Interface, error) {
-	var kubeconfig *string
+	var kubeconfig string
 
 	if cfg != "" {
-		kubeconfig = flag.String("kubeconfig", cfg, "absolute path to the kubeconfig file")
+		kubeconfig = cfg
 	} else {
-
 		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+			kubeconfig = filepath.Join(home, ".kube", "config")
 		} else {
-			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+			return "", nil, errors.New("No kubeconfig provided")
 		}
-		flag.Parse()
 	}
 
 	if namespace == "" {
 		namespace = "default"
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		panic(err)
 	}
@@ -38,4 +37,14 @@ func configSetup(cfg string, namespace string) (string, dynamic.Interface, error
 		panic(err)
 	}
 	return namespace, client, err
+}
+
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
 }
