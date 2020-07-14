@@ -28,6 +28,7 @@ func main() {
 		fmt.Println("Hubo un error")
 		os.Exit(1)
 	}
+
 	fmt.Println(res)
 
 	service := cmd.ServiceManagerImpl{}
@@ -35,5 +36,7 @@ func main() {
 
 	port, err = service.CreateService("", "default", "nginx", 80)
 	fmt.Println(port)
+
+
 
 }
