@@ -67,6 +67,24 @@ func (sm *ServiceManagerImpl) CreateService(cfg, namespace, name string, port ui
 	return res,err
 }
 
+func (sm *ServiceManagerImpl) DeleteService(cfg, namespace, name string) error {
+	namespace, client, err := configSetup(cfg, namespace)
+
+	if err != nil {
+		return err
+	}
+
+	serviceRes := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "services"}
+	deletePolicy := metav1.DeletePropagationForeground
+	deleteOptions := metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}
+
+	err = client.Resource(serviceRes).Namespace(namespace).Delete(context.TODO(), name, deleteOptions)
+
+	return err
+}
+
 func (sm *ServiceManagerImpl) createServiceFromTemplate(namespace, name string, port uint16) *unstructured.Unstructured {
 	service := &unstructured.Unstructured{
 		Object: map[string]interface{}{
